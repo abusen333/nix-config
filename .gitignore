@@ -1,0 +1,11 @@
+# nix build outputs / symlinks
+result
+result-*
+
+# editor / OS junk
+.DS_Store
+*.swp
+*~
+
+# direnv (if you ever use it)
+.direnv
