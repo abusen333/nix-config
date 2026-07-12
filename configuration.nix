@@ -834,6 +834,7 @@ EOF
       grim
       slurp
       rofi
+      networkmanagerapplet
       starship
       nushell
       carapace
