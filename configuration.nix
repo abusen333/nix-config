@@ -237,7 +237,7 @@ services.greetd = {
 
   settings = {
     default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd Hyprland";
+      command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd hyprland-noctalia";
       user = "greeter";
     };
   };
@@ -610,19 +610,159 @@ security.polkit.enable = true;
       noctaliaPkg = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
       hyprlandNoctaliaStarter = pkgs.writeShellScriptBin "hyprland-noctalia" ''
         set -e
-        mkdir -p "$HOME/.config/hypr"
+        mkdir -p "$HOME/.config/hypr" "$HOME/.config/waybar" "$HOME/pictures/screenshots"
 
+        # ── Hyprland Config ──
         if [ ! -f "$HOME/.config/hypr/hyprland.conf" ]; then
-          cat > "$HOME/.config/hypr/hyprland.conf" <<'EOF'
+          cat > "$HOME/.config/hypr/hyprland.conf" <<'HYPRCFG'
+monitor=DP-1,5120x1440@240,0x0,1
+
+env = XCURSOR_SIZE,24
+env = QT_QPA_PLATFORM,wayland;xcb
+env = GDK_BACKEND,wayland,x11
+env = MOZ_ENABLE_WAYLAND,1
+
+exec-once = waybar
+exec-once = mako
+exec-once = /run/current-system/sw/bin/qs -c noctalia-shell
+exec-once = swayidle -w timeout 600 'swaylock -f' timeout 900 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on'
+exec-once = wl-paste --type text --watch cliphist store
+exec-once = wl-paste --type image --watch cliphist store
+exec-once = udiskie -t
+
 input {
-  kb_layout = us,ara
-  kb_options = grp:win_space_toggle
+    kb_layout = us,ara
+    kb_options = grp:win_space_toggle
+    kb_repeat_rate = 30
+    kb_repeat_delay = 250
+    follow_mouse = 1
+    touchpad { natural_scroll = true; tap-to-click = true }
 }
 
-exec-once = qs -c noctalia-shell
-EOF
-        elif ! grep -q 'exec-once = qs -c noctalia-shell' "$HOME/.config/hypr/hyprland.conf"; then
-          printf '\nexec-once = qs -c noctalia-shell\n' >> "$HOME/.config/hypr/hyprland.conf"
+general {
+    gaps_in = 5; gaps_out = 10; border_size = 2
+    col.active_border = rgba(8ebdffff) rgba(ff6ec7ff) 45deg
+    col.inactive_border = rgba(595959aa)
+    layout = dwindle
+}
+
+decoration {
+    rounding = 8
+    blur { enabled = true; size = 4; passes = 2; new_optimizations = true }
+    drop_shadow = true; shadow_range = 12
+    col.shadow = rgba(1a1a1aee)
+}
+
+animations {
+    enabled = true
+    bezier = smoothOut, 0.36, 0, 0.66, -0.56
+    bezier = overshot, 0.4, 0.0, 0.2, 1.2
+    animation = windows, 1, 4, smoothOut, popin 80%
+    animation = windowsOut, 1, 3, smoothOut
+    animation = workspaces, 1, 6, overshot, slide
+}
+
+dwindle { pseudotile = true; preserve_split = true }
+misc { vfr = true; disable_hyprland_logo = true; disable_splash_rendering = true }
+
+$mainMod = SUPER
+bind = $mainMod, Q, exec, kitty
+bind = $mainMod, E, exec, dolphin
+bind = $mainMod, R, exec, pkill -x rofi || rofi -show drun -show-icons
+bind = $mainMod, C, killactive,
+bind = $mainMod SHIFT, Q, exec, hyprctl dispatch exit
+bind = $mainMod, V, togglefloating,
+bind = $mainMod, F, fullscreen, 1
+bind = $mainMod, S, togglespecialworkspace,
+bind = $mainMod, H, movefocus, l
+bind = $mainMod, L, movefocus, r
+bind = $mainMod, K, movefocus, u
+bind = $mainMod, J, movefocus, d
+bind = $mainMod SHIFT, H, movewindow, l
+bind = $mainMod SHIFT, L, movewindow, r
+bind = $mainMod SHIFT, K, movewindow, u
+bind = $mainMod SHIFT, J, movewindow, d
+bind = $mainMod, 1, workspace, 1
+bind = $mainMod, 2, workspace, 2
+bind = $mainMod, 3, workspace, 3
+bind = $mainMod, 4, workspace, 4
+bind = $mainMod, 5, workspace, 5
+bind = $mainMod, 6, workspace, 6
+bind = $mainMod, 7, workspace, 7
+bind = $mainMod, 8, workspace, 8
+bind = $mainMod, 9, workspace, 9
+bind = $mainMod, 0, workspace, 10
+bind = $mainMod SHIFT, 1, movetoworkspace, 1
+bind = $mainMod SHIFT, 2, movetoworkspace, 2
+bind = $mainMod SHIFT, 3, movetoworkspace, 3
+bind = $mainMod SHIFT, 4, movetoworkspace, 4
+bind = $mainMod SHIFT, 5, movetoworkspace, 5
+bind = $mainMod SHIFT, 6, movetoworkspace, 6
+bind = $mainMod SHIFT, 7, movetoworkspace, 7
+bind = $mainMod SHIFT, 8, movetoworkspace, 8
+bind = $mainMod SHIFT, 9, movetoworkspace, 9
+bind = $mainMod SHIFT, 0, movetoworkspace, 10
+bind = $mainMod, mouse_down, workspace, e+1
+bind = $mainMod, mouse_up, workspace, e-1
+bindm = $mainMod, mouse:272, movewindow
+bindm = $mainMod, mouse:273, resizewindow
+bindel = , XF86AudioRaiseVolume, exec, wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+
+bindel = , XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindl = , XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bindl = , XF86AudioPlay, exec, playerctl play-pause
+bindl = , XF86AudioNext, exec, playerctl next
+bindl = , XF86AudioPrev, exec, playerctl previous
+bindl = , XF86MonBrightnessUp, exec, brightnessctl set +5%
+bindl = , XF86MonBrightnessDown, exec, brightnessctl set 5%-
+bind = , Print, exec, mkdir -p ~/pictures/screenshots && grim -g "$(slurp)" - | wl-copy && wl-paste > ~/pictures/screenshots/$(date +%Y-%m-%d_%H-%M-%S).png
+
+windowrulev2 = float, class:(org.pulseaudio.pavucontrol)
+windowrulev2 = float, class:(blueman-manager)
+windowrulev2 = float, title:(Picture-in-Picture)
+windowrulev2 = pin, title:(Picture-in-Picture)
+HYPRCFG
+        fi
+
+        # ── Waybar Config ──
+        if [ ! -f "$HOME/.config/waybar/config" ]; then
+          cat > "$HOME/.config/waybar/config" <<'WBARCFG'
+{
+    "layer": "top", "position": "top", "height": 32,
+    "margin-top": 6, "margin-left": 8, "margin-right": 8,
+    "modules-left": ["hyprland/workspaces"],
+    "modules-center": ["clock"],
+    "modules-right": ["tray","pulseaudio","network","cpu","memory","battery"],
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        "format": "{icon}",
+        "format-icons": {"1":"一","2":"二","3":"三","4":"四","5":"五","6":"六","7":"七","8":"八","9":"九","10":"十"},
+        "persistent-workspaces": {"1":[],"2":[],"3":[],"4":[],"5":[]}
+    },
+    "clock": {"format": "{:%a %d %b  %H:%M}"},
+    "tray": {"icon-size": 18},
+    "pulseaudio": {"format": "{icon} {volume}%", "format-muted": " {volume}%", "format-icons": {"default":["","",""]}},
+    "network": {"format-wifi": " {signalStrength}%", "format-ethernet": " {ifname}", "format-disconnected": " Disconnected"},
+    "cpu": {"format": " {usage}%"},
+    "memory": {"format": " {}%"},
+    "battery": {"format": "{icon} {capacity}%", "format-icons":["",""], "format-charging": " {capacity}%"}
+}
+WBARCFG
+        fi
+
+        if [ ! -f "$HOME/.config/waybar/style.css" ]; then
+          cat > "$HOME/.config/waybar/style.css" <<'WBARCSS'
+* { font-family: "JetBrains Mono", "Font Awesome 6 Free", sans-serif; font-size: 13px; }
+window#waybar { background: rgba(18,18,18,0.85); color: #cdd6f4; border-radius: 8px; }
+#workspaces button { color: #6c7086; padding: 2px 8px; border-radius: 4px; }
+#workspaces button.active { color: #cdd6f4; background: rgba(137,180,250,0.25); }
+#workspaces button:hover { background: rgba(137,180,250,0.15); }
+#workspaces button.urgent { color: #f38ba8; }
+#clock { padding: 0 12px; }
+#pulseaudio, #network, #cpu, #memory, #battery { padding: 0 10px; color: #bac2de; }
+#pulseaudio.muted, #battery.critical, #network.disconnected { color: #f38ba8; }
+#battery.charging { color: #a6e3a1; }
+tooltip { background: rgba(30,30,46,0.95); border: 1px solid rgba(137,180,250,0.3); border-radius: 6px; }
+WBARCSS
         fi
 
         exec Hyprland
@@ -759,6 +899,10 @@ EOF
       fresh-editor
       wl-clipboard
       cliphist
+      grim
+      slurp
+      waybar
+      rofi
       starship
       nushell
       carapace
